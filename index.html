@@ -1,59 +1,52 @@
-```html
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Salary Slip - Mobile Friendly</title>
-  <!-- Tailwind via CDN for quick deploy (works on GitHub Pages/Vercel) -->
+  <title>Salary Slip</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <meta name="description" content="Employee salary slip lookup by Gate Pass number. Drop this index.html in any static site (GitHub Pages / Netlify / Vercel) and it works."/>
+
   <style>
-    /* small polished touches */
-    body { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
-    .card { background: linear-gradient(180deg, #ffffff, #f8fafc); }
+    body { -webkit-font-smoothing: antialiased; }
     @media print {
-      .no-print { display:none !important; }
+      .no-print { display: none !important; }
       body { background: white !important; }
     }
   </style>
 </head>
+
 <body class="min-h-screen bg-slate-50 text-slate-900">
   <div class="max-w-xl mx-auto p-4">
-    <header class="no-print mb-4">
-      <div class="flex items-center gap-3">
-        <div class="p-3 rounded-lg bg-indigo-600 text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m2 0a2 2 0 110 4H7a2 2 0 110-4h10zM7 12V7a2 2 0 012-2h6a2 2 0 012 2v5" /></svg>
-        </div>
-        <div>
-          <h1 class="text-xl font-semibold">Salary Slip Portal</h1>
-          <p class="text-sm text-slate-500">Enter your Gate Pass number to view & print salary slip.</p>
-        </div>
-      </div>
+
+    <header class="no-print mb-4 text-center">
+      <h1 class="text-2xl font-bold">Salary Slip</h1>
     </header>
 
     <main>
+
+      <!-- Search Box Only -->
       <section class="no-print mb-4">
         <label class="block text-sm mb-2 font-medium">Gate Pass Number</label>
         <div class="flex gap-2">
-          <input id="searchInput" type="text" placeholder="e.g. PZF0534"
-            class="flex-1 rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-          <button id="searchBtn" class="px-4 py-2 rounded-md bg-indigo-600 text-white font-medium">Find</button>
-          <button id="randomBtn" class="px-3 py-2 rounded-md bg-slate-200 text-slate-700">Random</button>
+          <input id="searchInput" type="text" placeholder="Enter Gate Pass"
+            class="flex-1 rounded-md border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-indigo-300" />
+          <button id="searchBtn" class="px-4 py-2 rounded-md bg-indigo-600 text-white font-medium">
+            Search
+          </button>
         </div>
-        <p id="helper" class="text-xs text-slate-500 mt-2">Gate Pass lookup is case-insensitive. If your record is missing, paste the full dataset into the DATA_CSV constant inside this file.</p>
       </section>
 
-      <section id="resultArea" class="card rounded-2xl p-4 shadow-sm border border-slate-100">
+      <!-- Result Area -->
+      <section id="resultArea" class="rounded-2xl p-4 shadow-sm border bg-white">
         <div id="notFound" class="text-center py-12">
-          <p class="text-slate-600">No salary slip selected yet — enter Gate Pass above and press Find.</p>
+          <p class="text-slate-600">Enter Gate Pass and press Search.</p>
         </div>
 
         <div id="slip" class="hidden">
-          <div class="flex justify-between items-start mb-4">
+          <div class="flex justify-between mb-4">
             <div>
-              <h2 class="text-lg font-bold" id="employeeName">Employee Name</h2>
-              <p class="text-sm text-slate-500" id="designation">Designation</p>
+              <h2 class="text-lg font-bold" id="employeeName">--</h2>
+              <p class="text-sm text-slate-500" id="designation">--</p>
             </div>
             <div class="text-right text-sm">
               <p id="sno">S.No: --</p>
@@ -63,25 +56,25 @@
           </div>
 
           <div class="grid grid-cols-2 gap-3 text-sm mb-3">
-            <div class="bg-white p-3 rounded-md border">
-              <div class="font-medium text-xs text-slate-500">Worked Days</div>
+            <div class="p-3 border rounded">
+              <div class="text-xs text-slate-500">Worked Days</div>
               <div id="workedDays" class="text-base font-semibold">0</div>
             </div>
-            <div class="bg-white p-3 rounded-md border">
-              <div class="font-medium text-xs text-slate-500">OT Hrs</div>
+            <div class="p-3 border rounded">
+              <div class="text-xs text-slate-500">OT Hrs</div>
               <div id="otHrs" class="text-base font-semibold">0</div>
             </div>
-            <div class="bg-white p-3 rounded-md border">
-              <div class="font-medium text-xs text-slate-500">Gross</div>
+            <div class="p-3 border rounded">
+              <div class="text-xs text-slate-500">Gross</div>
               <div id="gross" class="text-base font-semibold">0</div>
             </div>
-            <div class="bg-white p-3 rounded-md border">
-              <div class="font-medium text-xs text-slate-500">Net Payable</div>
+            <div class="p-3 border rounded">
+              <div class="text-xs text-slate-500">Net Payable</div>
               <div id="netPayable" class="text-base font-semibold">0</div>
             </div>
           </div>
 
-          <div class="overflow-x-auto bg-white rounded-md border">
+          <div class="overflow-x-auto border rounded">
             <table class="min-w-full text-sm divide-y">
               <thead class="bg-slate-50 text-xs text-slate-600">
                 <tr>
@@ -89,9 +82,7 @@
                   <th class="px-3 py-2 text-right">Amount</th>
                 </tr>
               </thead>
-              <tbody id="components" class="divide-y">
-                <!-- populated by JS -->
-              </tbody>
+              <tbody id="components" class="divide-y"></tbody>
               <tfoot class="bg-slate-50 text-sm">
                 <tr>
                   <td class="px-3 py-2 font-medium">Total Deductions</td>
@@ -106,32 +97,19 @@
           </div>
 
           <div class="mt-4 flex gap-2 no-print">
-            <button id="printBtn" class="px-4 py-2 rounded-md bg-green-600 text-white font-medium">Print / Save PDF</button>
-            <button id="downloadBtn" class="px-4 py-2 rounded-md bg-slate-200 text-slate-800">Download JSON</button>
-            <button id="clearBtn" class="px-3 py-2 rounded-md bg-red-50 text-red-700">Clear</button>
+            <button id="printBtn" class="px-4 py-2 rounded bg-green-600 text-white">Print / PDF</button>
+            <button id="downloadBtn" class="px-4 py-2 rounded bg-slate-200">Download JSON</button>
+            <button id="clearBtn" class="px-3 py-2 rounded bg-red-200 text-red-700">Clear</button>
           </div>
 
-          <p class="text-xs text-slate-400 mt-3">Powered by local browser-only data. No server needed — drop this file into a GitHub repo and deploy.</p>
         </div>
       </section>
 
-      <footer class="no-print mt-4 text-center text-xs text-slate-500">
-        Tip: For full deployment, push this file into a GitHub repo and enable Pages / or deploy to Netlify/Vercel.
-      </footer>
     </main>
   </div>
 
   <script>
-    /*
-      IMPORTANT:
-      - This small app contains a sample dataset in DATA_CSV variable.
-      - For production, replace DATA_CSV contents with your full table (CSV with header).
-      - The app parses CSV and lets employees fetch salary slips by Gate Pass (case-insensitive).
-      - You asked for only index.html — this single file is ready to drop into a static site.
-    */
-
-    // SAMPLE CSV: Replace or paste your entire table (including header row) into DATA_CSV.
-    // Columns expected: S.No,Emp Code,Gate Pass,Name of the Employee,Designation,Worked Days,OT Hrs,Gross,PF,ESI,PT,Any other recovery,Salary Advance,Total Deductions,Net Payable
+    /* KEEPING YOUR ORIGINAL DATASET */
     const DATA_CSV = `S.No,Emp Code,Gate Pass,Name of the Employee,Designation,Worked Days,OT Hrs,Gross,PF,ESI,PT,Any other recovery,Salary Advance,Total Deductions,Net Payable
 1,189654.00,PZF0534,Neeraj Kumar Chauhan,Scaffolder,10,19,12074,0,0,0,0,0,0,12074
 2,181233-2,PZF0546,Deepak  Chauhan,Scaffolder,10,16,11530,0,0,0,0,0,0,11530
@@ -246,182 +224,100 @@
 111,116377-2,PZF0498,Baban  Uraon,Scaffolder,12,26,14836,996,0,0,890,0,1886,12950
 `;
 
-    // ---------- CSV PARSER ----------
     function parseCSV(csv) {
       const lines = csv.trim().split(/\r?\n/);
-      if (!lines.length) return [];
-      const header = lines[0].split(',').map(h => h.trim());
-      const rows = [];
-      for (let i = 1; i < lines.length; i++) {
-        // allow commas inside names? user data seems comma-free. If your dataset has commas in fields, consider using proper CSV quoting.
-        const parts = lines[i].split(',').map(p => p.trim());
-        if (parts.length < header.length) {
-          // pad missing trailing fields
-          while (parts.length < header.length) parts.push('');
-        }
+      const header = lines[0].split(",");
+      return lines.slice(1).map(line => {
+        const p = line.split(",");
         const obj = {};
-        for (let j = 0; j < header.length; j++) {
-          obj[header[j]] = parts[j];
-        }
-        rows.push(obj);
-      }
-      return rows;
-    }
-
-    // ---------- Build employees index ----------
-    const raw = parseCSV(DATA_CSV);
-    const employees = raw.map((r, idx) => {
-      // normalize numeric fields
-      const num = v => {
-        if (v === undefined || v === null || v === '') return 0;
-        const cleaned = (''+v).replace(/[^0-9.\-]/g,'');
-        const n = parseFloat(cleaned);
-        return isNaN(n) ? 0 : n;
-      };
-      return {
-        SNo: r['S.No'] || r['SNo'] || (idx+1),
-        EmpCode: r['Emp Code'] || r['EmpCode'] || '',
-        GatePass: (r['Gate Pass'] || r['GatePass'] || '').toString(),
-        Name: r['Name of the Employee'] || r['Name'] || '',
-        Designation: r['Designation'] || '',
-        WorkedDays: num(r['Worked Days'] || r['WorkedDays']),
-        OTHrs: num(r['OT Hrs'] || r['OTHrs']),
-        Gross: num(r['Gross']),
-        PF: num(r['PF']),
-        ESI: num(r['ESI']),
-        PT: num(r['PT']),
-        AnyOtherRecovery: num(r['Any other recovery'] || r['AnyOtherRecovery']),
-        SalaryAdvance: num(r['Salary Advance'] || r['SalaryAdvance']),
-        TotalDeductions: num(r['Total Deductions'] || r['TotalDeductions']),
-        NetPayable: num(r['Net Payable'] || r['NetPayable'])
-      };
-    });
-
-    // create quick lookup map by gate pass (lowercased)
-    const mapByGate = {};
-    employees.forEach(emp => {
-      if (emp.GatePass) mapByGate[emp.GatePass.toLowerCase()] = emp;
-    });
-
-    // ---------- UI helpers ----------
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
-    const randomBtn = document.getElementById('randomBtn');
-    const slipEl = document.getElementById('slip');
-    const notFoundEl = document.getElementById('notFound');
-    const componentsTbody = document.getElementById('components');
-
-    function formatINR(n) {
-      if (n === null || n === undefined) return '0';
-      // simple formatter
-      return n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
-    }
-
-    function showSlip(emp) {
-      if (!emp) {
-        slipEl.classList.add('hidden');
-        notFoundEl.classList.remove('hidden');
-        return;
-      }
-      notFoundEl.classList.add('hidden');
-      slipEl.classList.remove('hidden');
-
-      document.getElementById('employeeName').textContent = emp.Name || '--';
-      document.getElementById('designation').textContent = emp.Designation || '--';
-      document.getElementById('sno').textContent = `S.No: ${emp.SNo}`;
-      document.getElementById('gatePass').textContent = `Gate Pass: ${emp.GatePass || '--'}`;
-      document.getElementById('empCode').textContent = `Emp Code: ${emp.EmpCode || '--'}`;
-      document.getElementById('workedDays').textContent = emp.WorkedDays;
-      document.getElementById('otHrs').textContent = emp.OTHrs;
-      document.getElementById('gross').textContent = formatINR(emp.Gross);
-      document.getElementById('netPayable').textContent = formatINR(emp.NetPayable);
-      document.getElementById('netPayableFooter').textContent = formatINR(emp.NetPayable);
-      document.getElementById('totalDeductions').textContent = formatINR(emp.TotalDeductions);
-
-      // populate components
-      componentsTbody.innerHTML = '';
-      const comp = [
-        ['Gross Salary', emp.Gross],
-        ['PF', emp.PF],
-        ['ESI', emp.ESI],
-        ['PT', emp.PT],
-        ['Any other recovery', emp.AnyOtherRecovery],
-        ['Salary Advance', emp.SalaryAdvance]
-      ];
-      comp.forEach(([label, value]) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-3 py-2">${label}</td><td class="px-3 py-2 text-right">${formatINR(value)}</td>`;
-        componentsTbody.appendChild(tr);
+        header.forEach((h, i) => obj[h.trim()] = p[i]?.trim());
+        return obj;
       });
     }
 
-    function findByGate(gate) {
-      if (!gate) return null;
-      return mapByGate[gate.toLowerCase()] || null;
-    }
+    const raw = parseCSV(DATA_CSV);
+    const employees = raw.map((r, i) => ({
+      SNo: r["S.No"] || (i+1),
+      EmpCode: r["Emp Code"],
+      GatePass: r["Gate Pass"],
+      Name: r["Name of the Employee"],
+      Designation: r["Designation"],
+      WorkedDays: Number(r["Worked Days"]) || 0,
+      OTHrs: Number(r["OT Hrs"]) || 0,
+      Gross: Number(r["Gross"]) || 0,
+      PF: Number(r["PF"]) || 0,
+      ESI: Number(r["ESI"]) || 0,
+      PT: Number(r["PT"]) || 0,
+      AnyOtherRecovery: Number(r["Any other recovery"]) || 0,
+      SalaryAdvance: Number(r["Salary Advance"]) || 0,
+      TotalDeductions: Number(r["Total Deductions"]) || 0,
+      NetPayable: Number(r["Net Payable"]) || 0,
+    }));
 
-    // ---------- Events ----------
-    searchBtn.addEventListener('click', () => {
-      const val = searchInput.value.trim();
-      if (!val) {
-        alert('Enter a Gate Pass number (e.g. PZF0534).');
+    const mapByGate = {};
+    employees.forEach(e => mapByGate[e.GatePass?.toLowerCase()] = e);
+
+    const slip = document.getElementById("slip");
+    const nf = document.getElementById("notFound");
+
+    function showSlip(emp) {
+      if (!emp) {
+        slip.classList.add("hidden");
+        nf.classList.remove("hidden");
         return;
       }
-      const res = findByGate(val);
-      if (res) {
-        showSlip(res);
-      } else {
-        slipEl.classList.add('hidden');
-        notFoundEl.classList.remove('hidden');
-        notFoundEl.innerHTML = `<p class="text-red-600 font-medium">No record found for "<span class="font-semibold">${val}</span>"</p>
-          <p class="text-xs text-slate-500 mt-2">Check spelling or ask admin to paste the full dataset into this file.</p>`;
-      }
-    });
 
-    searchInput.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') searchBtn.click();
-    });
+      nf.classList.add("hidden");
+      slip.classList.remove("hidden");
 
-    randomBtn.addEventListener('click', () => {
-      const idx = Math.floor(Math.random() * employees.length);
-      const emp = employees[idx];
-      searchInput.value = emp.GatePass || '';
-      showSlip(emp);
-    });
+      document.getElementById("employeeName").textContent = emp.Name;
+      document.getElementById("designation").textContent = emp.Designation;
+      document.getElementById("sno").textContent = "S.No: " + emp.SNo;
+      document.getElementById("gatePass").textContent = "Gate Pass: " + emp.GatePass;
+      document.getElementById("empCode").textContent = "Emp Code: " + emp.EmpCode;
 
-    document.getElementById('printBtn').addEventListener('click', () => {
-      window.print();
-    });
+      document.getElementById("workedDays").textContent = emp.WorkedDays;
+      document.getElementById("otHrs").textContent = emp.OTHrs;
+      document.getElementById("gross").textContent = emp.Gross;
+      document.getElementById("netPayable").textContent = emp.NetPayable;
 
-    document.getElementById('clearBtn').addEventListener('click', () => {
-      searchInput.value = '';
-      slipEl.classList.add('hidden');
-      notFoundEl.classList.remove('hidden');
-      notFoundEl.innerHTML = `<p class="text-slate-600">No salary slip selected yet — enter Gate Pass above and press Find.</p>`;
-    });
+      document.getElementById("totalDeductions").textContent = emp.TotalDeductions;
+      document.getElementById("netPayableFooter").textContent = emp.NetPayable;
 
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-      const gate = searchInput.value.trim();
-      const emp = findByGate(gate) || null;
-      if (!emp) { alert('No record selected to download.'); return; }
-      const blob = new Blob([JSON.stringify(emp, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `salary-slip-${(emp.GatePass||'employee').replace(/\s+/g,'_')}.json`;
-      document.body.appendChild(a);
+      const comp = document.getElementById("components");
+      comp.innerHTML = `
+        <tr><td class="px-3 py-2">Gross Salary</td><td class="px-3 py-2 text-right">${emp.Gross}</td></tr>
+        <tr><td class="px-3 py-2">PF</td><td class="px-3 py-2 text-right">${emp.PF}</td></tr>
+        <tr><td class="px-3 py-2">ESI</td><td class="px-3 py-2 text-right">${emp.ESI}</td></tr>
+        <tr><td class="px-3 py-2">PT</td><td class="px-3 py-2 text-right">${emp.PT}</td></tr>
+        <tr><td class="px-3 py-2">Other Recovery</td><td class="px-3 py-2 text-right">${emp.AnyOtherRecovery}</td></tr>
+        <tr><td class="px-3 py-2">Salary Advance</td><td class="px-3 py-2 text-right">${emp.SalaryAdvance}</td></tr>
+      `;
+    }
+
+    document.getElementById("searchBtn").onclick = () => {
+      const gp = document.getElementById("searchInput").value.trim().toLowerCase();
+      showSlip(mapByGate[gp]);
+    };
+
+    document.getElementById("clearBtn").onclick = () => {
+      slip.classList.add("hidden");
+      nf.classList.remove("hidden");
+      document.getElementById("searchInput").value = "";
+    };
+
+    document.getElementById("printBtn").onclick = () => window.print();
+
+    document.getElementById("downloadBtn").onclick = () => {
+      const gp = document.getElementById("gatePass").textContent.split(": ")[1];
+      const emp = mapByGate[gp.toLowerCase()];
+      const blob = new Blob([JSON.stringify(emp, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = gp + ".json";
       a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
-
-    // ---------- Init ----------
-    // show sample first record for visual feedback (optional)
-    // showSlip(employees[0]);
-
-    // Expose for console debugging (optional)
-    window.__salaryData = { employees, mapByGate };
+    };
   </script>
+
 </body>
 </html>
-```
