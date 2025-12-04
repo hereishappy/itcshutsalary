@@ -1,0 +1,427 @@
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Salary Slip - Mobile Friendly</title>
+  <!-- Tailwind via CDN for quick deploy (works on GitHub Pages/Vercel) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="description" content="Employee salary slip lookup by Gate Pass number. Drop this index.html in any static site (GitHub Pages / Netlify / Vercel) and it works."/>
+  <style>
+    /* small polished touches */
+    body { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    .card { background: linear-gradient(180deg, #ffffff, #f8fafc); }
+    @media print {
+      .no-print { display:none !important; }
+      body { background: white !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="max-w-xl mx-auto p-4">
+    <header class="no-print mb-4">
+      <div class="flex items-center gap-3">
+        <div class="p-3 rounded-lg bg-indigo-600 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m2 0a2 2 0 110 4H7a2 2 0 110-4h10zM7 12V7a2 2 0 012-2h6a2 2 0 012 2v5" /></svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-semibold">Salary Slip Portal</h1>
+          <p class="text-sm text-slate-500">Enter your Gate Pass number to view & print salary slip.</p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="no-print mb-4">
+        <label class="block text-sm mb-2 font-medium">Gate Pass Number</label>
+        <div class="flex gap-2">
+          <input id="searchInput" type="text" placeholder="e.g. PZF0534"
+            class="flex-1 rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          <button id="searchBtn" class="px-4 py-2 rounded-md bg-indigo-600 text-white font-medium">Find</button>
+          <button id="randomBtn" class="px-3 py-2 rounded-md bg-slate-200 text-slate-700">Random</button>
+        </div>
+        <p id="helper" class="text-xs text-slate-500 mt-2">Gate Pass lookup is case-insensitive. If your record is missing, paste the full dataset into the DATA_CSV constant inside this file.</p>
+      </section>
+
+      <section id="resultArea" class="card rounded-2xl p-4 shadow-sm border border-slate-100">
+        <div id="notFound" class="text-center py-12">
+          <p class="text-slate-600">No salary slip selected yet — enter Gate Pass above and press Find.</p>
+        </div>
+
+        <div id="slip" class="hidden">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h2 class="text-lg font-bold" id="employeeName">Employee Name</h2>
+              <p class="text-sm text-slate-500" id="designation">Designation</p>
+            </div>
+            <div class="text-right text-sm">
+              <p id="sno">S.No: --</p>
+              <p id="gatePass">Gate Pass: --</p>
+              <p id="empCode">Emp Code: --</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-sm mb-3">
+            <div class="bg-white p-3 rounded-md border">
+              <div class="font-medium text-xs text-slate-500">Worked Days</div>
+              <div id="workedDays" class="text-base font-semibold">0</div>
+            </div>
+            <div class="bg-white p-3 rounded-md border">
+              <div class="font-medium text-xs text-slate-500">OT Hrs</div>
+              <div id="otHrs" class="text-base font-semibold">0</div>
+            </div>
+            <div class="bg-white p-3 rounded-md border">
+              <div class="font-medium text-xs text-slate-500">Gross</div>
+              <div id="gross" class="text-base font-semibold">0</div>
+            </div>
+            <div class="bg-white p-3 rounded-md border">
+              <div class="font-medium text-xs text-slate-500">Net Payable</div>
+              <div id="netPayable" class="text-base font-semibold">0</div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto bg-white rounded-md border">
+            <table class="min-w-full text-sm divide-y">
+              <thead class="bg-slate-50 text-xs text-slate-600">
+                <tr>
+                  <th class="px-3 py-2 text-left">Component</th>
+                  <th class="px-3 py-2 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="components" class="divide-y">
+                <!-- populated by JS -->
+              </tbody>
+              <tfoot class="bg-slate-50 text-sm">
+                <tr>
+                  <td class="px-3 py-2 font-medium">Total Deductions</td>
+                  <td class="px-3 py-2 text-right font-medium" id="totalDeductions">0</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-bold">Net Payable</td>
+                  <td class="px-3 py-2 text-right font-bold" id="netPayableFooter">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="mt-4 flex gap-2 no-print">
+            <button id="printBtn" class="px-4 py-2 rounded-md bg-green-600 text-white font-medium">Print / Save PDF</button>
+            <button id="downloadBtn" class="px-4 py-2 rounded-md bg-slate-200 text-slate-800">Download JSON</button>
+            <button id="clearBtn" class="px-3 py-2 rounded-md bg-red-50 text-red-700">Clear</button>
+          </div>
+
+          <p class="text-xs text-slate-400 mt-3">Powered by local browser-only data. No server needed — drop this file into a GitHub repo and deploy.</p>
+        </div>
+      </section>
+
+      <footer class="no-print mt-4 text-center text-xs text-slate-500">
+        Tip: For full deployment, push this file into a GitHub repo and enable Pages / or deploy to Netlify/Vercel.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    /*
+      IMPORTANT:
+      - This small app contains a sample dataset in DATA_CSV variable.
+      - For production, replace DATA_CSV contents with your full table (CSV with header).
+      - The app parses CSV and lets employees fetch salary slips by Gate Pass (case-insensitive).
+      - You asked for only index.html — this single file is ready to drop into a static site.
+    */
+
+    // SAMPLE CSV: Replace or paste your entire table (including header row) into DATA_CSV.
+    // Columns expected: S.No,Emp Code,Gate Pass,Name of the Employee,Designation,Worked Days,OT Hrs,Gross,PF,ESI,PT,Any other recovery,Salary Advance,Total Deductions,Net Payable
+    const DATA_CSV = `S.No,Emp Code,Gate Pass,Name of the Employee,Designation,Worked Days,OT Hrs,Gross,PF,ESI,PT,Any other recovery,Salary Advance,Total Deductions,Net Payable
+1,189654.00,PZF0534,Neeraj Kumar Chauhan,Scaffolder,10,19,12074,0,0,0,0,0,0,12074
+2,181233-2,PZF0546,Deepak  Chauhan,Scaffolder,10,16,11530,0,0,0,0,0,0,11530
+3,189497,PZF0497,Sk Mustakin Mustakin,Trainee Scaffolder,14,21,13268,0,100,0,0,2000,2100,11168
+4,175975-2,PZF0523,Tilanand Kumar Singh,Scaffolder,12,20,13981,996,0,0,250,2000,3246,10735
+5,168873-3,PZF0465,Sk Samim Aktar,Scaffolder,20,27,22366,0,0,0,0,2000,2000,20366
+6,184570,PZF0558,Rahul  .,Scaffolder,5,7,5628,415,0,0,0,0,415,5213
+7,106314-10,PZF0542,Vijay  Chauhan,Foreman,10,21,14507,0,0,0,0,0,0,14507
+8,176118,PZF0536,Dharm  Raj,Scaffolder,11,16,12468,0,0,0,0,0,0,12468
+9,189200,PZF0461,Ankit  Sharma,Trainee Scaffolder,21,9,16648,0,125,0,0,2000,2125,14523
+10,189205,PZF0494,Supriya  Mahata,Trainee Scaffolder,17,6,13291,0,100,0,0,2000,2100,11191
+11,189215,PZF0467,Vishnu  Thakur,Trainee Scaffolder,15,10,12407,1041,94,0,0,2000,3135,9272
+12,189051,PZF0473,Sk  Taher,Scaffolder,15,25,17512,1577,0,150,0,0,1727,15785
+13,184409-2,PZF0496,Sk Saddam  Hossen,Scaffolder,14,36,18131,0,0,0,0,2000,2000,16131
+14,182331,PZF0481,Sk Ali  Akbar,Scaffolder,15,36,19053,1577,0,150,0,0,1727,17326
+15,189960,PZF0533,Dhiraj  Kumar,Trainee Scaffolder,9,22,9759,625,74,0,250,0,949,8810
+16,189557,PZF0502,Bageshwar  Gupta,Foreman,9,23,13774,857,0,0,1120,2000,3977,9797
+17,183948,PZF0511,Mr.  Pradum,Scaffolder,11,17,12675,913,0,0,271,2000,3184,9491
+18,134525-2,PZF0515,Deepak  Prasad,Scaffolder,11,16,12468,913,0,0,0,0,913,11555
+19,189969,PZF0520,Ravindra Kumar Kushwaha,Scaffolder,8,9,8724,664,0,0,2000,0,2664,6060
+20,189977,PZF0518,Shravan  Oraon,Scaffolder,7,11,8142,581,0,0,500,0,1081,7061
+21,189935,PZF0510,Umesh  Agariya,Scaffolder,8,13,9356,664,0,0,500,0,1164,8192
+22,184423-2,PZF0495,Sk  Saklin,Scaffolder,14,36,18131,0,0,0,0,2000,2000,16131
+23,105635-3,PZF0543,Surendra Chauhan Chauhan,Scaffolder,9,18,10986,0,0,0,0,0,0,10986
+24,184421,PZF0466,Sk Anisuddin Rahaman,Scaffolder,22,39,25949,0,0,0,0,2000,2000,23949
+25,169573-3,PZF0560,Uday Narayan Chauhan,Scaffolder,5,7,5628,415,0,0,0,0,415,5213
+26,185732,,Anish Kumar Singh,Safety Supervisor,5,0,6155,0,0,0,0,0,0,6155
+27,189967,PZF0529,Sintu  Kumar,Trainee Scaffolder,10,21,10344,694,78,0,656,0,1428,8916
+28,190011,PZF0544,Mahesh Chauhan Chauhan,Trainee Scaffolder,11,19,10813,0,82,0,0,0,82,10731
+29,182438-2,PZF0447,Rahul Singh Chouhan,Scaffolder,25,19,25917,1800,0,200,0,2000,4000,21917
+30,189972,PZF0559,Sundaram  Maurya,Scaffolder,5,7,5628,415,0,0,0,0,415,5213
+31,187617,PZF0505,Jitendra  Kumar,Scaffolder,10,26,13070,830,0,0,271,2000,3101,9969
+32,118342-2,PZF0551,Lalbabu  .,Scaffolder,10,20,12202,0,0,0,0,0,0,12202
+33,189855,PZF0521,Vijay  Uraw,Scaffolder,12,22,14299,996,0,0,890,0,1886,12413
+34,186359,PZF0482,Siraz  Shah,Scaffolder,15,34,18763,1644,0,150,0,0,1794,16969
+35,189206,PZF0489,Bikas Chandra Mahato,Trainee Scaffolder,17,7,13435,0,101,0,0,2000,2101,11334
+36,189335,PZF0475,Vivek  Kumar,Scaffolder,13,8,13158,0,0,0,0,2000,2000,11158
+37,189255,PZF0469,Ramdeo  Kumar,Trainee Scaffolder,22,32,20705,1527,156,200,0,2000,3883,16822
+38,150769-3,PZF0471,Manish Kumar  Thakur,Scaffolder,18,5,17339,0,0,0,1000,2000,3000,14339
+39,148662-3,PZF0468,Bablu  Kumar,Scaffolder,22,5,21087,0,0,0,0,2000,2000,19087
+40,183871,PZF0456,Suraj Kumar  Singh,Scaffolder,12,9,12378,996,0,0,0,2000,2996,9382
+41,165427-2,PZF0512,Pinku  Yadav,Foreman,12,22,16834,1142,0,150,0,2000,3292,13542
+42,189473,PZF0537,Rambilash  .,Scaffolder,11,18,12837,0,0,0,0,0,0,12837
+43,189478,PZF0545,Pankaj  Kumar,Scaffolder,10,15,11445,0,0,0,0,0,0,11445
+44,190012,,Roshan Chauhan Chauhan,Scaffolder,10,17,11689,0,0,0,0,0,0,11689
+45,156124-3,PZF0454,Rakesh  .,Scaffolder,25,45,29585,1736,0,200,0,2000,3936,25649
+46,174896,PZF0554,Balkar  Masih,Supervisor,17,0,23314,1800,0,200,0,0,2000,21314
+47,189992,PZF0531,Yougendra  Yadav,Trainee Scaffolder,12,17,11211,833,85,0,0,0,918,10293
+48,184373,PZF0448,Shesh Mani Chauhan,Scaffolder,23,5,22046,1800,0,200,0,2000,4000,18046
+49,187616,PZF0463,Dipak  Kumar,Trainee Scaffolder,10,12,9043,694,68,0,0,0,762,8281
+50,189515,,Ajay  Kumar,Trainee Scaffolder,15,21,13998,1041,105,0,250,2000,3396,10602
+51,189476,PZF0541,Abhishek  Kumar,Scaffolder,11,19,12991,0,0,0,0,0,0,12991
+52,189551,PZF0500,Rahul Kumar Gupta,Scaffolder,9,23,11610,747,0,0,1000,2000,3747,7863
+53,181231-2,PZF0540,Bajarangi  Bajarangi,Scaffolder,10,14,11308,0,0,0,0,0,0,11308
+54,168486-2,PZF0486,Rohit Kumar Singh,Scaffolder,15,30,18178,1245,0,150,406,2000,3801,14377
+55,189556,PZF0501,Upendra  Uraon,Scaffolder,12,22,14292,996,0,0,890,2000,3886,10406
+56,110228-4,PZF0477,Chittaranjan Ranjan Ranjanbehura,Foreman,15,15,18815,1427,0,150,0,2000,3577,15238
+57,189199,PZF0459,Mr  Sanjay,Trainee Scaffolder,22,16,18391,1527,138,150,0,2000,3815,14576
+58,168711-2,PZF0472,Ravi Kumar Thakur,Scaffolder,21,17,21855,1743,0,200,0,2000,3943,17912
+59,189555,PZF0517,Vinod  Ram,Scaffolder,12,20,14072,996,0,0,1540,2000,4536,9536
+60,168605-2,PZF0487,Shankar Kumar Thakur,Scaffolder,15,30,18185,1245,0,150,406,2000,3801,14384
+61,183418,PZF0556,Amit  Masih,Scaffolder,17,21,18835,1800,0,150,0,0,1950,16885
+62,189981,PZF0509,Ramkishun  Ram,Scaffolder,9,13,10265,747,0,0,500,0,1247,9018
+63,188840,PZF0483,Sk  Sanealam,Trainee Scaffolder,15,27,14866,1371,112,0,0,0,1483,13383
+64,189553,PZF0507,Aravind  Kumar,Scaffolder,11,12,11890,913,0,0,1540,2000,4453,7437
+65,189554,PZF0503,Ramesh  Kumar,Scaffolder,9,23,11680,747,0,0,1540,2000,4287,7393
+66,110536-8,PZF0562,Saravan  .,Scaffolder,6,6,6419,498,0,0,0,0,498,5921
+67,117792-7,PZF0563,Ravi  Raj,Scaffolder,5,7,5628,415,0,0,0,0,415,5213
+68,189936,PZF0532,Md  Ajim,Trainee Scaffolder,9,19,9325,625,70,0,0,0,695,8630
+69,189472,PZF0553,Rambabu  .,Scaffolder,11,10,11617,0,0,0,0,0,0,11617
+70,189980,PZF0547,Rajendra  Ram,Scaffolder,7,10,7923,581,0,0,500,0,1081,6842
+71,189195,PZF0458,Prithvi Raj Chauhan,Trainee Scaffolder,24,20,20533,1666,154,200,0,2000,4020,16513
+72,177509-2,PZF0539,Dheeraj Kumar Yadav,Scaffolder,10,14,11306,0,0,0,0,0,0,11306
+73,185091,PZF0478,Krishnapada  Singh,Scaffolder,17,7,16704,0,0,0,0,2000,2000,14704
+74,176155-2,,Ajay  Kumar,Scaffolder,11,21,13191,0,0,0,0,0,0,13191
+75,184382,PZF0514,Ranjit  Singh,Scaffolder,11,3,10648,913,0,0,271,2000,3184,7464
+76,189958,PZF0548,Azad  Kumar,Trainee Scaffolder,8,18,8449,555,64,0,0,0,619,7830
+77,176175-2,PZF0549,Jai  Singh,Scaffolder,11,18,12772,1632,0,0,0,0,1632,11140
+78,117516-3,PZF0527,Sunil  Kumar,Scaffolder,11,17,12613,913,0,0,750,0,1663,10950
+79,187632,PZF0504,Shiv  .,Trainee Scaffolder,11,2,8393,764,63,0,271,2000,3098,5295
+80,186358,PZF0484,Rajak Ali Shah,Scaffolder,15,27,17862,1644,0,150,0,0,1794,16068
+81,189208,PZF0476,Dilip Kumar Sing,Scaffolder,17,8,16849,0,0,0,0,2000,2000,14849
+82,182778,PZF0453,Sujeet  Kumar,Scaffolder,21,13,21264,1743,0,200,0,2000,3943,17321
+83,189202,PZF0462,Sonu  Kumar,Trainee Scaffolder,25,44,24633,1736,185,200,0,2000,4121,20512
+84,179972,PZF0555,Sourav  Dhapa,Scaffolder,17,21,18835,1800,0,150,0,0,1950,16885
+85,138850-7,PZF0449,Dhiraj  .,Foreman,17,31,23807,1618,0,200,0,2000,3818,19989
+86,149119-3,PZF0450,Bharat  Kumar,Scaffolder,22,31,24792,1800,0,200,0,2000,4000,20792
+87,182481,PZF0525,Sumit . Kumar,Trainee Scaffolder,11,22,11308,0,85,0,0,0,85,11223
+88,175567-3,PZF0513,Janmejay  Singh,Scaffolder,9,3,8761,747,0,0,271,2000,3018,5743
+89,189968,PZF0561,Suraj  Kumar,Scaffolder,5,7,5628,415,0,0,0,0,415,5213
+90,159583-3,PZF0451,Shyam  Sundra,Scaffolder,22,14,22333,0,0,0,0,2000,2000,20333
+91,189982,PZF0508,Sanjay  Ram,Scaffolder,10,13,11192,830,0,0,500,0,1330,9862
+92,181662,PZF0526,Ankit  Kumar,Scaffolder,11,23,13567,913,0,0,250,2000,3163,10404
+93,189197,PZF0457,Ram Murat Singh,Trainee Scaffolder,24.5,45,24451,1701,184,200,0,2000,4085,20366
+94,189201,PZF0460,Nikhil  Singh,Trainee Scaffolder,22,26,19837,1527,149,150,0,2000,3826,16011
+95,182116-2,PZF0538,Jayprakash  Jayprakash,Scaffolder,11,19,12960,0,0,0,0,0,0,12960
+96,189198,PZF0464,Akash  Chauhan,Trainee Scaffolder,21,31,19830,1458,149,150,0,2000,3757,16073
+97,189957,PZF0550,Arbind  Kumar,Scaffolder,6,9,6952,498,0,0,0,0,498,6454
+98,186361,PZF0499,Deendayal  Uraon,Scaffolder,9,24,11779,747,0,0,1540,2000,4287,7492
+99,142623-3,PZF0474,Firoz  Khan,Foreman,20,19,24928,1800,0,200,0,2000,4000,20928
+100,189938,PZF0528,Ram  Babu,Trainee Scaffolder,10,17,9744,694,74,0,271,0,1039,8705
+101,189235,PZF0480,Aman  Kumar,Trainee Scaffolder,15,4,11540,0,87,0,0,0,87,11453
+102,189939,PZF0530,Vijay  Babu,Trainee Scaffolder,10,2,7630,694,58,0,271,0,1023,6607
+103,189203,PZF0492,Chandan  Kumar,Trainee Scaffolder,15,9,12263,0,92,0,1000,2000,3092,9171
+104,177616-2,PZF0455,Ravi  Kumar,Scaffolder,25,35,28139,1800,0,200,0,2000,4000,24139
+105,189991,PZF0506,Gulab  Uraon,Scaffolder,12,21,14214,996,0,0,890,0,1886,12328
+106,175172-2,PZF0522,Anil  Kumar,Scaffolder,11,21,13191,913,0,0,250,2000,3163,10028
+107,153621-3,PZF0479,Sk Rajibul  Islam,Scaffolder,15,31,18330,0,0,0,0,2000,2000,16330
+108,184383,PZF0452,Ankit  Singh,Scaffolder,24,4,22733,1800,0,200,0,2000,4000,18733
+109,189552,PZF0519,Ashok  Kumar,Scaffolder,8,6,8254,664,0,0,1540,2000,4204,4050
+110,189337,PZF0485,Janealam  Shah,Trainee Scaffolder,15,23,14287,0,108,0,0,2000,2108,12179
+111,116377-2,PZF0498,Baban  Uraon,Scaffolder,12,26,14836,996,0,0,890,0,1886,12950
+`;
+
+    // ---------- CSV PARSER ----------
+    function parseCSV(csv) {
+      const lines = csv.trim().split(/\r?\n/);
+      if (!lines.length) return [];
+      const header = lines[0].split(',').map(h => h.trim());
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        // allow commas inside names? user data seems comma-free. If your dataset has commas in fields, consider using proper CSV quoting.
+        const parts = lines[i].split(',').map(p => p.trim());
+        if (parts.length < header.length) {
+          // pad missing trailing fields
+          while (parts.length < header.length) parts.push('');
+        }
+        const obj = {};
+        for (let j = 0; j < header.length; j++) {
+          obj[header[j]] = parts[j];
+        }
+        rows.push(obj);
+      }
+      return rows;
+    }
+
+    // ---------- Build employees index ----------
+    const raw = parseCSV(DATA_CSV);
+    const employees = raw.map((r, idx) => {
+      // normalize numeric fields
+      const num = v => {
+        if (v === undefined || v === null || v === '') return 0;
+        const cleaned = (''+v).replace(/[^0-9.\-]/g,'');
+        const n = parseFloat(cleaned);
+        return isNaN(n) ? 0 : n;
+      };
+      return {
+        SNo: r['S.No'] || r['SNo'] || (idx+1),
+        EmpCode: r['Emp Code'] || r['EmpCode'] || '',
+        GatePass: (r['Gate Pass'] || r['GatePass'] || '').toString(),
+        Name: r['Name of the Employee'] || r['Name'] || '',
+        Designation: r['Designation'] || '',
+        WorkedDays: num(r['Worked Days'] || r['WorkedDays']),
+        OTHrs: num(r['OT Hrs'] || r['OTHrs']),
+        Gross: num(r['Gross']),
+        PF: num(r['PF']),
+        ESI: num(r['ESI']),
+        PT: num(r['PT']),
+        AnyOtherRecovery: num(r['Any other recovery'] || r['AnyOtherRecovery']),
+        SalaryAdvance: num(r['Salary Advance'] || r['SalaryAdvance']),
+        TotalDeductions: num(r['Total Deductions'] || r['TotalDeductions']),
+        NetPayable: num(r['Net Payable'] || r['NetPayable'])
+      };
+    });
+
+    // create quick lookup map by gate pass (lowercased)
+    const mapByGate = {};
+    employees.forEach(emp => {
+      if (emp.GatePass) mapByGate[emp.GatePass.toLowerCase()] = emp;
+    });
+
+    // ---------- UI helpers ----------
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const randomBtn = document.getElementById('randomBtn');
+    const slipEl = document.getElementById('slip');
+    const notFoundEl = document.getElementById('notFound');
+    const componentsTbody = document.getElementById('components');
+
+    function formatINR(n) {
+      if (n === null || n === undefined) return '0';
+      // simple formatter
+      return n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function showSlip(emp) {
+      if (!emp) {
+        slipEl.classList.add('hidden');
+        notFoundEl.classList.remove('hidden');
+        return;
+      }
+      notFoundEl.classList.add('hidden');
+      slipEl.classList.remove('hidden');
+
+      document.getElementById('employeeName').textContent = emp.Name || '--';
+      document.getElementById('designation').textContent = emp.Designation || '--';
+      document.getElementById('sno').textContent = `S.No: ${emp.SNo}`;
+      document.getElementById('gatePass').textContent = `Gate Pass: ${emp.GatePass || '--'}`;
+      document.getElementById('empCode').textContent = `Emp Code: ${emp.EmpCode || '--'}`;
+      document.getElementById('workedDays').textContent = emp.WorkedDays;
+      document.getElementById('otHrs').textContent = emp.OTHrs;
+      document.getElementById('gross').textContent = formatINR(emp.Gross);
+      document.getElementById('netPayable').textContent = formatINR(emp.NetPayable);
+      document.getElementById('netPayableFooter').textContent = formatINR(emp.NetPayable);
+      document.getElementById('totalDeductions').textContent = formatINR(emp.TotalDeductions);
+
+      // populate components
+      componentsTbody.innerHTML = '';
+      const comp = [
+        ['Gross Salary', emp.Gross],
+        ['PF', emp.PF],
+        ['ESI', emp.ESI],
+        ['PT', emp.PT],
+        ['Any other recovery', emp.AnyOtherRecovery],
+        ['Salary Advance', emp.SalaryAdvance]
+      ];
+      comp.forEach(([label, value]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="px-3 py-2">${label}</td><td class="px-3 py-2 text-right">${formatINR(value)}</td>`;
+        componentsTbody.appendChild(tr);
+      });
+    }
+
+    function findByGate(gate) {
+      if (!gate) return null;
+      return mapByGate[gate.toLowerCase()] || null;
+    }
+
+    // ---------- Events ----------
+    searchBtn.addEventListener('click', () => {
+      const val = searchInput.value.trim();
+      if (!val) {
+        alert('Enter a Gate Pass number (e.g. PZF0534).');
+        return;
+      }
+      const res = findByGate(val);
+      if (res) {
+        showSlip(res);
+      } else {
+        slipEl.classList.add('hidden');
+        notFoundEl.classList.remove('hidden');
+        notFoundEl.innerHTML = `<p class="text-red-600 font-medium">No record found for "<span class="font-semibold">${val}</span>"</p>
+          <p class="text-xs text-slate-500 mt-2">Check spelling or ask admin to paste the full dataset into this file.</p>`;
+      }
+    });
+
+    searchInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') searchBtn.click();
+    });
+
+    randomBtn.addEventListener('click', () => {
+      const idx = Math.floor(Math.random() * employees.length);
+      const emp = employees[idx];
+      searchInput.value = emp.GatePass || '';
+      showSlip(emp);
+    });
+
+    document.getElementById('printBtn').addEventListener('click', () => {
+      window.print();
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      searchInput.value = '';
+      slipEl.classList.add('hidden');
+      notFoundEl.classList.remove('hidden');
+      notFoundEl.innerHTML = `<p class="text-slate-600">No salary slip selected yet — enter Gate Pass above and press Find.</p>`;
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      const gate = searchInput.value.trim();
+      const emp = findByGate(gate) || null;
+      if (!emp) { alert('No record selected to download.'); return; }
+      const blob = new Blob([JSON.stringify(emp, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `salary-slip-${(emp.GatePass||'employee').replace(/\s+/g,'_')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // ---------- Init ----------
+    // show sample first record for visual feedback (optional)
+    // showSlip(employees[0]);
+
+    // Expose for console debugging (optional)
+    window.__salaryData = { employees, mapByGate };
+  </script>
+</body>
+</html>
+```
